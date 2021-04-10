@@ -1,0 +1,591 @@
+//#include "Arduino.h"
+//#include <Servo.h>
+//
+//Servo myservo;  // create servo object to control a servo
+//// twelve servo objects can be created on most boards
+//
+//int pos = 0;    // variable to store the servo position
+//
+//const int MinDegree = 0;
+//const int MaxDegree = 35;
+//
+//void setup() {
+//    myservo.attach(44);  // attaches the servo on pin 9 to the servo object//定义引脚
+//}
+//
+//void loop() {
+//    for (pos = MinDegree; pos <= MaxDegree; pos += 1) { // goes from 0 degrees to 180 degrees
+//        // in steps of 1 degree
+//        myservo.write(pos);              // tell servo to go to position in variable 'pos'
+//        delay(20);                       // waits 15ms for the servo to reach the position
+//    }
+//    for (pos = MaxDegree; pos >= MinDegree; pos -= 1) { // goes from 180 degrees to 0 degrees
+//        myservo.write(pos);              // tell servo to go to position in variable 'pos'
+//        delay(20);                       // waits 15ms for the servo to reach the position
+//    }
+//}
+////舵机大小及方向调试
+
+
+
+////传感器
+//#include "Arduino.h"
+//
+//const int Sensor[6] = {A0, A1, A2, A3, A4, A5};
+//
+//void setup() {
+//    Serial.begin(115200);
+//
+//    pinMode(8, OUTPUT);
+//    digitalWrite(8, LOW);
+//}
+//
+//void loop() {
+//    Serial.print("IRs: ");
+//    for (int i : Sensor) {
+//        int t = analogRead(i);
+//        Serial.print(t);
+//        Serial.print(',');
+//    }
+//    Serial.print('0');
+//    Serial.print('\n');
+//}
+
+
+
+
+/*
+ * Simple demo, should work with any driver board
+ *
+ * Connect STEP, DIR as indicated
+ *
+ * Copyright (C)2015-2017 Laurentiu Badea
+ *
+ * This file may be redistributed under the terms of the MIT license.
+ * A copy of this license has been included with this distribution in the file LICENSE.
+ */
+
+////步进电机调试
+//#include <Arduino.h>
+//#include "A4988.h"
+//
+//// Motor steps per revolution. Most steppers are 200 steps or 1.8 degrees/step
+//#define MOTOR_STEPS 200
+//#define RPM 240
+//
+//// Since microstepping is set externally, make sure this matches the selected mode
+//// If it doesn't, the motor will move at a different RPM than chosen
+//// 1=full step, 2=half step etc.
+//#define MICRO_STEPS 2
+//
+//// All the wires needed for full functionality
+//#define MFL 13, 12
+//#define MFR 7, 4
+//#define MBL 6, 3
+//#define MBR 5, 2
+//
+//#define LMF -1
+//#define RMF 1
+//#define LMB 1
+//#define RMB -1
+//
+//enum Motors {
+//    MotorLF = 0, MotorRF, MotorLB, MotorRB
+//};
+//
+//#define MOTOR(X) steppers[(X)]
+//#define StartMission(LF, RF, LB, RB) \
+//    MOTOR(MotorLF).startMove(LMF * (LF));\
+//    MOTOR(MotorRF).startMove(RMF * (RF));\
+//    MOTOR(MotorLB).startMove(LMF * (LB));\
+//    MOTOR(MotorRB).startMove(RMF * (RB))\
+//
+//
+//BasicStepperDriver steppers[] = {
+//        BasicStepperDriver(MOTOR_STEPS, MFL), // 左前
+//        BasicStepperDriver(MOTOR_STEPS, MFR), // 右前
+//        BasicStepperDriver(MOTOR_STEPS, MBL), // 左后
+//        BasicStepperDriver(MOTOR_STEPS, MBR)  // 右后
+//};
+//
+//
+////Uncomment line to use enable/disable functionality
+////BasicStepperDriver stepper(MOTOR_STEPS, DIR, STEP, SLEEP);
+//
+//void setup() {
+//    pinMode(8, OUTPUT);
+//    digitalWrite(8, LOW);
+//
+//    for (auto &stepper: steppers) {
+//        stepper.begin(RPM, MICRO_STEPS);
+//    }
+//}
+//
+//int stage = 0;
+//
+//int stage_speed[][4] = {
+//        {LMF, RMF, LMF, RMF}, //F
+//        {LMF, RMB, LMB, RMF}, //L
+//        {LMB, RMB, LMB, RMB}, //B
+//        {LMB, RMF, LMF, RMB}  //R
+//};
+//
+//uint64_t t0 = millis();
+//
+//void loop() {
+//    if (millis() - t0 > 5000) {//分时
+//        stage = (stage + 1) % 4;//输出n种状态
+//        t0 = millis();
+//    }
+//      int i = 0;
+//
+//    switch (stage) {
+//        case 0:
+//            for (auto &stepper : steppers) {
+//                if (!stepper.nextAction()) {
+//                    StartMission(10000, -10000,
+//                                 -10000, 10000);
+//                }
+//            }
+//            break;
+//    }
+////        case 1:
+////            for (auto &stepper : steppers) {
+////                if (!stepper.nextAction()) {
+////                    StartMission(10000, 10000,
+////                                 10000, 10000);
+////                }
+////            }
+////            break;
+////        case 2:
+////            for (auto &stepper : steppers) {
+////                if (!stepper.nextAction()) {
+////                    StartMission(-10000, -10000,
+////                                 -10000, -10000);
+////                }
+////            }
+////            break;
+////        case 3:
+////            for (auto &stepper : steppers) {
+////                if (!stepper.nextAction()) {
+////                    StartMission(10000, -10000,
+////                                 -10000, 10000);
+////                }
+////            }
+////            break;
+////    }
+////
+////
+//
+//    //MOTOR(MotorLF).nextAction();
+//
+//    //画方格
+////    for (auto &stepper: steppers) {
+////        if (!stepper.nextAction()) {
+////            stepper.startMove(400 * 10 * stage_speed[stage][i]);
+////        }
+////       i++;
+////    }
+//}
+
+
+
+////舵机状态
+//#include "Arduino.h"
+//#include <Servo.h>
+//
+//Servo myservo[] = {Servo(), Servo(), Servo(), Servo(), Servo()};
+//
+//
+//int pos = 0;    // variable to store the servo position
+//
+//#define NM (-3)
+//
+//enum ARM_STATUS {
+//    INIT = 0,
+//    SCAN,
+//    DRAWLUP,//上边的状态
+//    DRAWL,//抓取左边第一个
+//    DRAWMUP,//上边的状态
+//    DRAWM,//抓取中间的
+//    DRAWRUP,//上边的状态
+//    DRAWR,//抓取右边第一个
+//    MOVEING,//移动过程中状态
+//
+//    //前面放置
+//    PLACEMUP,//
+//    PLACEM,//中间放置
+//    PLACERUP,
+//    PLACER,//前右边放置
+//    PLACELUP,
+//    PLACEL,//前左边放置
+//
+//    //左边台阶放置
+//    PLACELMUP,
+//    PLACELM,
+//    PLACELLUP,
+//    PLACELL,
+//    PLACELRUP,
+//    PLACELR,
+//
+//    //左下边放置
+//    PLACELDMUP,//PLACE LEFT DOWN MIDDLE UP
+//    PLACELDM,
+//    PLACELDLUP,//PLACE LEFT DOWN LEFT UP
+//    PLACELDL,
+//    PLACELDRUP,//PLACE LEFT DOWN RIGHT UP
+//    PLACELDR,
+//
+//    CLAW_OPEN,
+//    CLAW_CLOSE
+//};
+//
+//int ARM_SERVO_PORT[]{44, 45, 46, 9, 10};
+//
+//int ARM_STATUS_ARRAY[][5] = {
+//        {0,   30,  0, 35, 145}, // INIT
+//        {NM, 100,  5, 70,  45}, // SCAN  识别二维码
+//
+//        {40, 110, 60, 90, 80},//DRAWLup抓取上边的状态
+//        {NM,  85,  3, 80, 80},//DRAWL抓取左边第一个
+//
+//        {40,  90, 0,  60, 45},//DRAWMup上边的状态
+//        {NM, 107, 0,  65, 45},//DRAWM抓取中间
+//
+//        {40, 90, 15, 75,  12}, // 上边的状态
+//        {NM, 70,  3, 87,  12},//DRAWR抓取右边第一个
+//
+//        { 0, 30,  0, 35, 145},//移动过程中状态
+//
+//        {NM, 55, 40, 120, 147},//PLACEMUP
+//        {NM, 35, 40, 165, 145},//PLACEM放置中间
+//
+//        {NM, 30 ,40, 120, 115},
+//        {NM, 46, 52, 165, 115},//qian右边放置
+//
+//        {NM, 30, 40, 120, 172},
+//        {NM, 50, 55, 165, 172},
+//
+//        //PLACEL
+//        {NM, 22, 22, 22, 240},
+//        {NM, 22, 22, 22, 240},
+//
+//        {NM, 22, 22, 22, 240},
+//        {NM, 22, 22, 22, 240},
+//
+//        {NM, 22, 22, 22, 240},
+//        {NM, 22, 22, 22, 240},
+//
+//        //PLACELD    PLACE LEFT DOWN RIGHT UP
+//        {NM, 22, 22, 22, 240},
+//        {NM, 22, 22, 22, 240},
+//
+//        {NM, 22, 22, 22, 240},
+//        {NM, 22, 22, 22, 240},
+//
+//        {NM, 22, 22, 22, 240},
+//        {NM, 22, 22, 22, 240},
+//
+//
+//        {40, NM, NM, NM, NM},//CLAW张开状态
+//        {0,  NM, NM, NM, NM},//CLAW紧闭状态
+//};
+//int ARM_CURRENT_DEG[] = {30, 30, 0, 35, 145};
+//
+//void set_arm_status(ARM_STATUS status);
+//
+//void setup() {
+//    Serial.begin(115200);
+//    for (int i = 0; i < 5; ++i) {
+//        myservo[i].attach(ARM_SERVO_PORT[i]);  // attaches the servo on pin 44 to the servo object
+//    }
+//}
+//
+////void open_and_close(){
+////    set_arm_status(CLAW_OPEN);
+////    delay(2000);
+////    set_arm_status(CLAW_CLOSE);
+////    delay(2000);
+////}
+//void open() {
+//    set_arm_status(CLAW_OPEN);
+//}
+//
+//void close() {
+//    set_arm_status(CLAW_CLOSE);
+//}
+//
+//void loop() {
+////    set_arm_status(INIT);
+////    close();
+////    delay(2000);
+////    open();
+////    close();
+//////    open_and_close();
+////    set_arm_status(SCAN);
+////    delay(3000);
+//////    open_and_close();
+////
+////
+////    set_arm_status(DRAWLUP);
+////    delay(2000);
+////    set_arm_status(DRAWL);//左边抓取
+////    delay(1000);
+////    close();
+////
+////
+//////    open_and_close();
+////    set_arm_status(DRAWMUP);
+////    delay(1000);
+////    set_arm_status(DRAWM);//中间抓取
+////    delay(1000);
+////    close();
+////
+//////    open_and_close();
+////    set_arm_status(DRAWRUP);
+////    delay(3000);
+////    set_arm_status(DRAWR);//右边
+////    delay(3000);
+////    close();
+////    delay(3000);
+//////    open_and_close();
+//
+//    set_arm_status(MOVEING);
+//    delay(2000);
+//    open();
+//    delay(3000);
+//    close();
+//
+////    set_arm_status(PLACEMUP);
+////    delay(2000);
+////    set_arm_status(PLACEM);//PLACE中间
+////    delay(2000);
+////    open();
+////    delay(2000);
+////    set_arm_status(PLACEMUP);
+////    delay(1000);
+////
+////    set_arm_status(PLACERUP);
+////    delay(2000);
+////    set_arm_status(PLACER);
+////    delay(2000);
+////    open();
+////    delay(2000);
+////    close();
+////    delay(1000);
+////    set_arm_status(PLACERUP);
+////    delay(1000);
+//
+//    set_arm_status(PLACELUP);
+//    delay(2000);
+//    set_arm_status(PLACEL);
+//    delay(2000);
+//    open();
+//    delay(2000);
+//    close();
+//    delay(1000);
+//    set_arm_status(PLACELUP);
+//    delay(1000);
+//
+////    set_arm_status(PLACELMUP);
+////    delay(2000);
+////    set_arm_status(PLACELM);
+////    delay(2000);
+////    open();
+////    delay(2000);
+////    close();
+////    delay(2000);
+////    set_arm_status(PLACELMUP);
+////
+////    set_arm_status(PLACELLUP);
+////    delay(2000);
+////    set_arm_status(PLACELL);
+////    delay(2000);
+////    open();
+////    delay(2000);
+////    close();
+////    delay(2000);
+////    set_arm_status(PLACELLUP);
+////
+////    set_arm_status(PLACELRUP);
+////    delay(2000);
+////    set_arm_status(PLACELR);
+////    delay(2000);
+////    open();
+////    delay(2000);
+////    close();
+////    delay(2000);
+////    set_arm_status(PLACELRUP);
+////
+////    set_arm_status(PLACELDMUP);
+////    delay(2000);
+////    set_arm_status(PLACELDM);
+////    delay(2000);
+////    open();
+////    delay(2000);
+////    close();
+////    delay(2000);
+////    set_arm_status(PLACELDMUP);
+////
+////    set_arm_status(PLACELDLUP);
+////    delay(2000);
+////    set_arm_status(PLACELDL);
+////    delay(2000);
+////    open();
+////    delay(2000);
+////    close();
+////    delay(2000);
+////    set_arm_status(PLACELDLUP);
+////
+////    set_arm_status(PLACELDRUP);
+////    delay(2000);
+////    set_arm_status(PLACELDR);
+////    delay(2000);
+////    open();
+////    delay(2000);
+////    close();
+////    delay(2000);
+////    set_arm_status(PLACELDRUP);
+//
+//    Serial.println(myservo[1].read());
+//}
+//
+//void set_arm_status(ARM_STATUS status) {
+//    int slice_count = 10;
+//    int current_arm_target[] = {0, 0, 0, 0, 0};
+//    float servo_slice_step[] = {0, 0, 0, 0, 0};
+//    for (int i = 0; i < 5; ++i) {
+//        if (ARM_STATUS_ARRAY[status][i] == NM) continue;
+//        current_arm_target[i] = ARM_CURRENT_DEG[i];
+//        servo_slice_step[i] = (float) (ARM_STATUS_ARRAY[status][i] - current_arm_target[i]) / (float) slice_count;
+//    }
+//
+//    for (int i = 0; i < slice_count; ++i) {
+//        if (ARM_STATUS_ARRAY[status][i] == NM) continue;
+//        delay(50);
+//        myservo[i].write(current_arm_target[i]);
+//        current_arm_target[i] += (int) servo_slice_step[i];
+//    }
+//
+//    for (int i = 0; i < 5; ++i) {
+//        if (ARM_STATUS_ARRAY[status][i] == NM) continue;
+//        delay(20);
+//        myservo[i].write(ARM_STATUS_ARRAY[status][i]);
+//        ARM_CURRENT_DEG[i] = ARM_STATUS_ARRAY[status][i];
+//    }
+//
+//}
+
+
+
+
+#include <Arduino.h>
+#include "A4988.h"
+
+#define MOTOR_STEPS 200
+#define RPM 240
+
+#define MICRO_STEPS 2
+
+#define MFL 13, 12
+#define MFR 7, 4
+#define MBL 6, 3
+#define MBR 5, 2
+
+#define LMF -1
+#define RMF 1
+#define LMB 1
+#define RMB -1
+
+enum Motors {
+    MotorLF = 0, MotorRF, MotorLB, MotorRB
+};
+
+#define MOTOR(X) steppers[(X)]
+#define StartMission(LF, RF, LB, RB) \
+    MOTOR(MotorLF).startMove(LMF * (LF));\
+    MOTOR(MotorRF).startMove(RMF * (RF));\
+    MOTOR(MotorLB).startMove(LMF * (LB));\
+    MOTOR(MotorRB).startMove(RMF * (RB))\
+
+
+BasicStepperDriver steppers[] = {
+        BasicStepperDriver(MOTOR_STEPS, MFL), // 左前
+        BasicStepperDriver(MOTOR_STEPS, MFR), // 右前
+        BasicStepperDriver(MOTOR_STEPS, MBL), // 左后
+        BasicStepperDriver(MOTOR_STEPS, MBR)  // 右后
+};
+const int Sensor[6] = {A0, A1, A2, A3, A4, A5};
+
+//Uncomment line to use enable/disable functionality
+//BasicStepperDriver stepper(MOTOR_STEPS, DIR, STEP, SLEEP);
+
+void setup2() {
+    Serial.begin(115200);
+
+    pinMode(8, OUTPUT);
+    digitalWrite(8, LOW);
+
+    for (auto &stepper: steppers) {
+        stepper.begin(RPM, MICRO_STEPS);
+    }
+}
+
+int stage = 0;
+int j = 0;
+
+int stage_speed[][4] = {
+        {LMF, RMF, LMF, RMF}, //F
+        {LMF, RMB, LMB, RMF}, //L
+        {LMB, RMB, LMB, RMB}, //B
+        {LMB, RMF, LMF, RMB}  //R
+};
+
+uint64_t t0 = millis();
+
+
+void loop2() {
+    while (j == 0) {
+        for (auto &stepper : steppers) {
+            if (!stepper.nextAction()) {
+                StartMission(10000, -10000,
+                             -10000, 10000);
+            }
+        }
+        j++;
+    }
+    int i = 0;
+    while (Sensor[4] < 400) {
+        for (auto &stepper : steppers) {
+            if (!stepper.nextAction()) {
+                StartMission(10000, 10000,
+                             10000, 10000);
+            }
+        }
+
+        if (Sensor[0] < 400) {
+            i++;
+        }
+        stage = i;
+        switch (stage) {
+            case 2:
+                for (auto &stepper : steppers) {
+                    if (!stepper.nextAction()) {
+                        StartMission(0, 0,
+                                     0, 0);
+                    }
+                }
+                break;
+            case 6:
+                for (auto &stepper : steppers) {
+                    if (!stepper.nextAction()) {
+                        StartMission(0, 0,
+                                     0, 0);
+                    }
+                }
+                break;
+
+        }
+    }
+
+}
