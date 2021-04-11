@@ -23,6 +23,7 @@ void SoftPWM::update_profile(uint16_t id) {
 
 void SoftPWM::enable(uint16_t id) {
     pwm_profiles[id]->enable = true;
+    pinMode(pwm_profiles[id]->pin, OUTPUT);
 }
 
 void SoftPWM::disable(uint16_t id) {

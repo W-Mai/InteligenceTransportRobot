@@ -19,7 +19,7 @@
 #define MBR 5, 2
 
 Sensors sensors;
-SoftPWM soft_pwm(4);
+//SoftPWM soft_pwm(4);
 Automobile automobile(4);
 
 //Wheel wheel(MFR, true);
@@ -34,11 +34,6 @@ void setup() {
     digitalWrite(8, LOW);
 
     Automobile_Init();
-    soft_pwm.set_micros(micros);
-    soft_pwm.add(12, 0, 512);
-    soft_pwm.add(4, 0, 512);
-    soft_pwm.add(3, 0, 512);
-    soft_pwm.add(2, 0, 512);
 //wheel.begin();
 }
 
@@ -48,31 +43,22 @@ int f = 1;
 uint32_t t0 = millis();
 
 void loop() {
-//    if (millis() - t0 > 1) {
-//        if (k == -512 || k == 512) f = -f;
-//        k += f;
-//
-//        t0 = millis();
-//    }
-    digitalWrite(13, 1);
-    digitalWrite(7, 1);
-    digitalWrite(6, 0);
-    digitalWrite(5, 0);
-    soft_pwm.set_freq(0, 600);
-    soft_pwm.set_freq(1, 600);
-    soft_pwm.set_freq(2, 600);
-    soft_pwm.set_freq(3, 600);
+    if (millis() - t0 > 200) {
+        if (k == -1 || k == 1) f = -f;
+        k += f;
 
-    soft_pwm.commit();
-//    pwm_out(12, abs(k) * 6, 512);
-
+        t0 = millis();
+    }
+    automobile.run(0, 600, 100*k);
 }
 
 void Automobile_Init() {
-    automobile.add_wheel(MFR, true);
-    automobile.add_wheel(MFL, false);
-    automobile.add_wheel(MBL, false);
-    automobile.add_wheel(MBR, true);
+    automobile.set_micros(micros);
+
+    automobile.add_wheel(MFR, false);
+    automobile.add_wheel(MFL, true);
+    automobile.add_wheel(MBL, true);
+    automobile.add_wheel(MBR, false);
 
     automobile.begin();
 }
