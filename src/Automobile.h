@@ -21,8 +21,9 @@ private:
     uint8_t max_wheel;
     SoftPWM *soft_pwm;
     WheelS **pWheelS;
+    uint16_t enable_pin;
 public:
-    explicit Automobile(uint8_t num);
+    explicit Automobile(uint8_t num, uint16_t enable_pin = 0);
 
     void add_wheel(uint16_t dir_pin, uint16_t step_pin, bool dir);
 
@@ -31,6 +32,12 @@ public:
     void set_micros(uint32_t(*func)());
 
     void run(int16_t x, int16_t y, float deg);
+
+    void enable() const;
+
+    void disable() const;
+
+    void commit();
 };
 
 

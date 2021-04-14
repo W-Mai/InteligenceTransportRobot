@@ -1,29 +1,29 @@
-//#include "Arduino.h"
-//#include <Servo.h>
-//
-//Servo myservo;  // create servo object to control a servo
-//// twelve servo objects can be created on most boards
-//
-//int pos = 0;    // variable to store the servo position
-//
-//const int MinDegree = 0;
-//const int MaxDegree = 35;
-//
-//void setup() {
-//    myservo.attach(44);  // attaches the servo on pin 9 to the servo object//定义引脚
-//}
-//
-//void loop() {
-//    for (pos = MinDegree; pos <= MaxDegree; pos += 1) { // goes from 0 degrees to 180 degrees
-//        // in steps of 1 degree
-//        myservo.write(pos);              // tell servo to go to position in variable 'pos'
-//        delay(20);                       // waits 15ms for the servo to reach the position
-//    }
-//    for (pos = MaxDegree; pos >= MinDegree; pos -= 1) { // goes from 180 degrees to 0 degrees
-//        myservo.write(pos);              // tell servo to go to position in variable 'pos'
-//        delay(20);                       // waits 15ms for the servo to reach the position
-//    }
-//}
+#include "Arduino.h"
+#include <Servo.h>
+
+Servo myservo;  // create servo object to control a servo
+// twelve servo objects can be created on most boards
+
+int pos = 0;    // variable to store the servo position
+
+const int MinDegree = 0;
+const int MaxDegree = 270;
+
+void setup() {
+    myservo.attach(10);  // attaches the servo on pin 9 to the servo object//定义引脚
+}
+
+void loop() {
+    for (pos = MinDegree; pos <= MaxDegree; pos += 1) { // goes from 0 degrees to 180 degrees
+        // in steps of 1 degree
+        myservo.write(pos);              // tell servo to go to position in variable 'pos'
+        delay(20);                       // waits 15ms for the servo to reach the position
+    }
+    for (pos = MaxDegree; pos >= MinDegree; pos -= 1) { // goes from 180 degrees to 0 degrees
+        myservo.write(pos);              // tell servo to go to position in variable 'pos'
+        delay(20);                       // waits 15ms for the servo to reach the position
+    }
+}
 ////舵机大小及方向调试
 
 
@@ -477,115 +477,115 @@
 //}
 
 
-
-
-#include <Arduino.h>
-#include "A4988.h"
-
-#define MOTOR_STEPS 200
-#define RPM 240
-
-#define MICRO_STEPS 2
-
-#define MFL 13, 12
-#define MFR 7, 4
-#define MBL 6, 3
-#define MBR 5, 2
-
-#define LMF -1
-#define RMF 1
-#define LMB 1
-#define RMB -1
-
-enum Motors {
-    MotorLF = 0, MotorRF, MotorLB, MotorRB
-};
-
-#define MOTOR(X) steppers[(X)]
-#define StartMission(LF, RF, LB, RB) \
-    MOTOR(MotorLF).startMove(LMF * (LF));\
-    MOTOR(MotorRF).startMove(RMF * (RF));\
-    MOTOR(MotorLB).startMove(LMF * (LB));\
-    MOTOR(MotorRB).startMove(RMF * (RB))\
-
-
-BasicStepperDriver steppers[] = {
-        BasicStepperDriver(MOTOR_STEPS, MFL), // 左前
-        BasicStepperDriver(MOTOR_STEPS, MFR), // 右前
-        BasicStepperDriver(MOTOR_STEPS, MBL), // 左后
-        BasicStepperDriver(MOTOR_STEPS, MBR)  // 右后
-};
-const int Sensor[6] = {A0, A1, A2, A3, A4, A5};
-
-//Uncomment line to use enable/disable functionality
-//BasicStepperDriver stepper(MOTOR_STEPS, DIR, STEP, SLEEP);
-
-void setup2() {
-    Serial.begin(115200);
-
-    pinMode(8, OUTPUT);
-    digitalWrite(8, LOW);
-
-    for (auto &stepper: steppers) {
-        stepper.begin(RPM, MICRO_STEPS);
-    }
-}
-
-int stage = 0;
-int j = 0;
-
-int stage_speed[][4] = {
-        {LMF, RMF, LMF, RMF}, //F
-        {LMF, RMB, LMB, RMF}, //L
-        {LMB, RMB, LMB, RMB}, //B
-        {LMB, RMF, LMF, RMB}  //R
-};
-
-uint64_t t0 = millis();
-
-
-void loop2() {
-    while (j == 0) {
-        for (auto &stepper : steppers) {
-            if (!stepper.nextAction()) {
-                StartMission(10000, -10000,
-                             -10000, 10000);
-            }
-        }
-        j++;
-    }
-    int i = 0;
-    while (Sensor[4] < 400) {
-        for (auto &stepper : steppers) {
-            if (!stepper.nextAction()) {
-                StartMission(10000, 10000,
-                             10000, 10000);
-            }
-        }
-
-        if (Sensor[0] < 400) {
-            i++;
-        }
-        stage = i;
-        switch (stage) {
-            case 2:
-                for (auto &stepper : steppers) {
-                    if (!stepper.nextAction()) {
-                        StartMission(0, 0,
-                                     0, 0);
-                    }
-                }
-                break;
-            case 6:
-                for (auto &stepper : steppers) {
-                    if (!stepper.nextAction()) {
-                        StartMission(0, 0,
-                                     0, 0);
-                    }
-                }
-                break;
-
-        }
-    }
-
-}
+//
+//
+//#include <Arduino.h>
+//#include "A4988.h"
+//
+//#define MOTOR_STEPS 200
+//#define RPM 240
+//
+//#define MICRO_STEPS 2
+//
+//#define MFL 13, 12
+//#define MFR 7, 4
+//#define MBL 6, 3
+//#define MBR 5, 2
+//
+//#define LMF -1
+//#define RMF 1
+//#define LMB 1
+//#define RMB -1
+//
+//enum Motors {
+//    MotorLF = 0, MotorRF, MotorLB, MotorRB
+//};
+//
+//#define MOTOR(X) steppers[(X)]
+//#define StartMission(LF, RF, LB, RB) \
+//    MOTOR(MotorLF).startMove(LMF * (LF));\
+//    MOTOR(MotorRF).startMove(RMF * (RF));\
+//    MOTOR(MotorLB).startMove(LMF * (LB));\
+//    MOTOR(MotorRB).startMove(RMF * (RB))\
+//
+//
+//BasicStepperDriver steppers[] = {
+//        BasicStepperDriver(MOTOR_STEPS, MFL), // 左前
+//        BasicStepperDriver(MOTOR_STEPS, MFR), // 右前
+//        BasicStepperDriver(MOTOR_STEPS, MBL), // 左后
+//        BasicStepperDriver(MOTOR_STEPS, MBR)  // 右后
+//};
+//const int Sensor[6] = {A0, A1, A2, A3, A4, A5};
+//
+////Uncomment line to use enable/disable functionality
+////BasicStepperDriver stepper(MOTOR_STEPS, DIR, STEP, SLEEP);
+//
+//void setup2() {
+//    Serial.begin(115200);
+//
+//    pinMode(8, OUTPUT);
+//    digitalWrite(8, LOW);
+//
+//    for (auto &stepper: steppers) {
+//        stepper.begin(RPM, MICRO_STEPS);
+//    }
+//}
+//
+//int stage = 0;
+//int j = 0;
+//
+//int stage_speed[][4] = {
+//        {LMF, RMF, LMF, RMF}, //F
+//        {LMF, RMB, LMB, RMF}, //L
+//        {LMB, RMB, LMB, RMB}, //B
+//        {LMB, RMF, LMF, RMB}  //R
+//};
+//
+//uint64_t t0 = millis();
+//
+//
+//void loop2() {
+//    while (j == 0) {
+//        for (auto &stepper : steppers) {
+//            if (!stepper.nextAction()) {
+//                StartMission(10000, -10000,
+//                             -10000, 10000);
+//            }
+//        }
+//        j++;
+//    }
+//    int i = 0;
+//    while (Sensor[4] < 400) {
+//        for (auto &stepper : steppers) {
+//            if (!stepper.nextAction()) {
+//                StartMission(10000, 10000,
+//                             10000, 10000);
+//            }
+//        }
+//
+//        if (Sensor[0] < 400) {
+//            i++;
+//        }
+//        stage = i;
+//        switch (stage) {
+//            case 2:
+//                for (auto &stepper : steppers) {
+//                    if (!stepper.nextAction()) {
+//                        StartMission(0, 0,
+//                                     0, 0);
+//                    }
+//                }
+//                break;
+//            case 6:
+//                for (auto &stepper : steppers) {
+//                    if (!stepper.nextAction()) {
+//                        StartMission(0, 0,
+//                                     0, 0);
+//                    }
+//                }
+//                break;
+//
+//        }
+//    }
+//
+//}

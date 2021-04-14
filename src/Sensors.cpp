@@ -8,6 +8,6 @@ void Sensors::update_sensor() {
     for (int i = 0; i < 6; ++i) {
         auto t = static_cast<float>(analogRead(Sensor[i]));
         S_O[i] = (1 - K[i]) * S_O[i] + K[i] * t;
-        S[i] = S_O[i] < static_cast<float>(T[i]);
+        S[i] = S_O[i] > static_cast<float>(T[i]);
     }
 }

@@ -4,10 +4,11 @@
 
 #include "Automobile.h"
 
-Automobile::Automobile(uint8_t num) : MAX_WHEEL(num) {
+Automobile::Automobile(uint8_t num, uint16_t enable_pin) : MAX_WHEEL(num), enable_pin(enable_pin) {
     soft_pwm = new SoftPWM(num);
     pWheelS = (WheelS **) new WheelS *[num];
     max_wheel = 0;
+    pinMode(enable_pin, OUTPUT);
 }
 
 void Automobile::add_wheel(uint16_t dir_pin, uint16_t step_pin, bool dir) {
@@ -23,7 +24,6 @@ void Automobile::run(int16_t x, int16_t y, float deg) {
         soft_pwm->set_freq(i, abs(speed[i]));
         digitalWrite(pWheelS[i]->dir_pin, pWheelS[i]->dir ^ (speed[i] > 0));
     }
-    soft_pwm->commit();
 }
 
 void Automobile::begin() {
@@ -36,4 +36,18 @@ void Automobile::begin() {
 void Automobile::set_micros(uint32_t (*func)()) {
     soft_pwm->set_micros(func);
 
+}
+
+void Automobile::enable() const {
+    if (!enable_pin)return;
+    digitalWrite(enable_pin, LOW);
+}
+
+void Automobile::disable() const {
+    if (!enable_pin)return;
+    digitalWrite(enable_pin, HIGH);
+}
+
+void Automobile::commit() {
+    soft_pwm->commit();
 }
