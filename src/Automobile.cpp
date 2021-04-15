@@ -18,8 +18,8 @@ void Automobile::add_wheel(uint16_t dir_pin, uint16_t step_pin, bool dir) {
 }
 
 void Automobile::run(int16_t x, int16_t y, float deg) {
-    int32_t speed[4]{y - x + static_cast<int32_t>(ROW_K * deg), y + x - static_cast<int32_t>(ROW_K * deg),
-                     y - x - static_cast<int32_t>(ROW_K * deg), y + x + static_cast<int32_t>(ROW_K * deg)};
+    int32_t speed[4]{x + static_cast<int32_t>(ROW_K * deg), y - static_cast<int32_t>(ROW_K * deg),
+                     x - static_cast<int32_t>(ROW_K * deg), y + static_cast<int32_t>(ROW_K * deg)};
     for (int i = 0; i < max_wheel; ++i) {
         soft_pwm->set_freq(i, abs(speed[i]));
         digitalWrite(pWheelS[i]->dir_pin, pWheelS[i]->dir ^ (speed[i] > 0));

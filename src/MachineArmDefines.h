@@ -5,8 +5,8 @@
 #ifndef INTELIGENCETRANSPORTROBOT_MACHINEARMDEFINES_H
 #define INTELIGENCETRANSPORTROBOT_MACHINEARMDEFINES_H
 
-#include "MachineArm.h"
-
+//#include "MachineArm.h"
+#define NM (-3)
 #define AS(X) ARM_STATUS_ARRAY[(X)]
 
 int ARM_SERVO_PORT[]{44, 45, 46, 9, 10};
@@ -51,16 +51,16 @@ enum ARM_STATUS {
 };
 
 int16_t ARM_STATUS_ARRAY[][5] = {
-        {40,  30,  0,  35,  145}, // INIT
+        {145,  30,  0,  35,  145}, // INIT
         {NM, 100, 5,  70,  45}, // SCAN  识别二维码
 
-        {40, 110, 60, 90,  80},//DRAWLup抓取上边的状态
+        {145, 110, 60, 90,  80},//DRAWLup抓取上边的状态
         {NM, 85,  3,  80,  80},//DRAWL抓取左边第一个
 
-        {40, 90,  0,  60,  45},//DRAWMup上边的状态
+        {145, 90,  0,  60,  45},//DRAWMup上边的状态
         {NM, 107, 0,  65,  45},//DRAWM抓取中间
 
-        {40, 90,  15, 75,  12}, // 上边的状态
+        {145, 90,  15, 75,  12}, // 上边的状态
         {NM, 70,  3,  87,  12},//DRAWR抓取右边第一个
 
         {0,  30,  0,  35,  145},//移动过程中状态
@@ -95,8 +95,8 @@ int16_t ARM_STATUS_ARRAY[][5] = {
         {NM, 22,  22, 22,  240},
 
 
-        {40, NM, NM, NM, NM},//CLAW张开状态
-        {0,  NM, NM, NM, NM},//CLAW紧闭状态
+        {145, NM, NM, NM, NM},//CLAW张开状态
+        {185,  NM, NM, NM, NM},//CLAW紧闭状态
 };
 
 #endif //INTELIGENCETRANSPORTROBOT_MACHINEARMDEFINES_H

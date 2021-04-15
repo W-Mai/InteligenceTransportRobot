@@ -24,8 +24,8 @@ void MachineArm::begin(const int16_t *target) {
 }
 
 void MachineArm::commit_mission(int16_t *target, uint16_t time) {
-    int slice_count = 15;
-    float current_arm_target[MAX_ARMS]{0};
+    int slice_count = 5;
+    int current_arm_target[MAX_ARMS]{0};
     float servo_slice_step[MAX_ARMS]{0};
     for (uint16_t i = 0; i < max_arm; ++i) {
         if (target[i] == NM) continue;

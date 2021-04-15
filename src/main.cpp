@@ -15,10 +15,13 @@
 #include <Adafruit_SSD1306.h>
 #include "MsTimer2.h"
 #include "TimerOne.h"
+#include "TimerThree.h"
+#include "TimerFive.h"
 
 #include "Sensors.h"
 #include "Automobile.h"
 #include "MachineArmDefines.h"
+//#include "ServoTimer2.h"
 
 #define MFL 13, 12
 #define MFR 7, 4
@@ -27,15 +30,20 @@
 
 Sensors sensors;
 Automobile automobile(4, 8);
-MachineArm machine_arm(5);
+//MachineArm machine_arm(5);
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+int CODE_SERIES[6] = {0, 0, 0, 0, 0, 0};
 
 enum CAR_STATE {
     LEFT, MIDDLE, RIGHT, FULL
 };
 
 CAR_STATE carState[2] = {CAR_STATE::MIDDLE, CAR_STATE::MIDDLE};
-int CURRENT_DIR = 2; // 0 F, 1 B, 2 L, 3 R
+int CURRENT_DIR = -1; // 0 F, 1 B, 2 L, 3 R
+int CURRENT_STAGE = 0;
+
+//ServoTimer2 servos[5] = {ServoTimer2(), ServoTimer2(), ServoTimer2(), ServoTimer2(), ServoTimer2()};
 
 void Automobile_Init();
 
@@ -55,6 +63,12 @@ int timer1_counter;
 
 void gogogo();
 
+uint32_t t0 = millis();
+
+SoftPWM softPwm(2);
+
+void mypwm();
+
 void setup() {
     Serial.begin(115200);
     Serial1.begin(19200);
@@ -68,55 +82,206 @@ void setup() {
     Automobile_Init();
     MachineArm_Init();
 
-//    automobile.disable();
-    machine_arm.commit_mission(AS(ARM_STATUS::PLACEMUP), 50);
+    automobile.disable();
+//    machine_arm.commit_mission(AS(ARM_STATUS::INIT), 50);
 
-    MsTimer2::set(3, refresh_sensors);
+//    delay(1000);
+    MsTimer2::set(2, mypwm);
     MsTimer2::start();
+
+//    Timer3.initialize(1000);
+//    Timer3.attachInterrupt(refresh_sensors);
 
     Timer1.initialize(100);
     Timer1.attachInterrupt(gogogo);
+
+
+    Timer5.initialize(3000);
+    Timer5.attachInterrupt(refresh_sensors);
+
+
+    CURRENT_DIR = -1;
+    t0 = millis();
+
+    softPwm.set_micros(micros);
+    softPwm.add(44, 50, 76);
+
+    Timer3.initialize(16);
+
+    Timer3.attachInterrupt(mypwm);
+}
+
+void mypwm() {
+    softPwm.commit();
 }
 
 void gogogo() {
-    automobile.commit();
+//    automobile.commit();
+
 }
 
 int k = 1;
 int f = 1;
-uint32_t t0 = millis();
+
 
 void open_and_close() {
-    machine_arm.commit_mission(AS(CLAW_OPEN), 50);
-    delay(2000);
-    machine_arm.commit_mission(AS(CLAW_CLOSE), 50);
-    delay(2000);
+//    machine_arm.commit_mission(AS(CLAW_OPEN), 50);
+//    delay(2000);
+//    machine_arm.commit_mission(AS(CLAW_CLOSE), 50);
+//    delay(2000);
 }
 
-void loop() {
+bool flag = false;
 
+void loop() {
+#define SERVO_MIN() (25)  // minimum value in uS for this servo
+#define SERVO_MAX() (130)  // maximum value in uS for this servo
+//    for (int i = 0; i < 270; ++i) {
+//        softPwm.set_duty(0,map(i, 0, 270, SERVO_MIN(), SERVO_MAX()));
+//        delay(10);
+//    }
+//    for (int i = 270; i > 0; i--) {
+//        softPwm.set_duty(0,map(i, 0, 270, SERVO_MIN(), SERVO_MAX()));
+//        delay(10);
+//    }
+    if (millis() - t0 < 2000) {
+        softPwm.set_duty(0, map(145, 0, 270, SERVO_MIN(), SERVO_MAX()));
+    } else if (millis() - t0 < 4000) {
+        softPwm.set_duty(0, map(165, 0, 270, SERVO_MIN(), SERVO_MAX()));
+
+    } else t0 = millis();
+
+}
+
+void loop2() {
 
 //    if (millis() - t0 > 50) {
 //        if (k == -1 || k == 1) f = -f;
 //        k += f;
-
 
 #if defined(XDEBUG)
     testdrawstyles();      // Draw characters of the default font
 #else
     get_qrcode();
 #endif
+    if (0 <= CURRENT_DIR && CURRENT_DIR <= 3) {
+        car_auto_control();
+    }
+    switch (CURRENT_STAGE) {
+        case 0:
+            if (millis() - t0 > 7000) {
+                t0 = millis();
+                CURRENT_STAGE = 1;
+            }
+            automobile.run(0, 1200, 0);
+            break;
+        case 1:
+            if (millis() - t0 > 2500) {
+                t0 = millis();
+                CURRENT_STAGE = 2;
+                break;
+            }
+            automobile.run(1200, 0, 0);
+            break;
+        case 2:
+            if (millis() - t0 > 2000) {
+                t0 = millis();
+                CURRENT_STAGE = 3;
+                sensors.reset_count();
+            }
+            automobile.run(0, 0, 0);
+            break;
+        case 3:
+            flag = sensors.C[3] == 5 || sensors.C[4] == 5 || sensors.C[5] == 5;
+            if (millis() - t0 > 23000 || flag) {
+                t0 = millis();
+                CURRENT_STAGE = 4;
+                CURRENT_DIR = -1;
+                automobile.run(0, 0, 0);
+                break;
+            }
+            CURRENT_DIR = 0;
+            break;
+        case 4:
+            if (millis() - t0 > 10000) {
+                t0 = millis();
+                CURRENT_STAGE = 5;
+                sensors.reset_count();
+            }
+            automobile.run(0, 0, 0);
+            break;
+        case 5:
+            if (millis() - t0 > 1000) {
+                t0 = millis();
+                CURRENT_STAGE = 6;
+                sensors.reset_count();
+            }
+            automobile.run(1200, 0, 0);
+            break;
+        case 6:
+            flag = sensors.C[0] == 3 || sensors.C[1] == 3 || sensors.C[2] == 3;
+            if (/*millis() - t0 > 20000 || */flag) {
+                t0 = millis();
+                CURRENT_STAGE = 7;
+                CURRENT_DIR = -1;
+                automobile.run(0, 0, 0);
+                sensors.reset_count();
+                break;
+            }
+            CURRENT_DIR = 2;
+            break;
+        case 7:
+            if (millis() - t0 > 3000) {
+                t0 = millis();
+                CURRENT_STAGE = 8;
+                automobile.run(0, 0, 0);
+            }
+            automobile.run(0, 1200, 0);
+            break;
+        case 8:
+            if (millis() - t0 > 3000) {
+                t0 = millis();
+                CURRENT_STAGE = 9;
+                automobile.run(0, 0, 0);
+            }
+            automobile.run(0, 0, 0);
+            break;
+        case 9:
+            if (millis() - t0 > 3000) {
+                t0 = millis();
+                CURRENT_STAGE = 10;
+                automobile.run(0, 0, 0);
+                sensors.reset_count();
+            }
+            automobile.run(0, -1200, 0);
+            break;
+        case 10:
+            if (millis() - t0 > 1000) {
+                t0 = millis();
+                CURRENT_STAGE = 11;
+                sensors.reset_count();
+            }
+            automobile.run(1200, 0, 0);
+            break;
+        case 11:
+            flag = sensors.C[0] == 3 || sensors.C[1] == 3 || sensors.C[2] == 3;
+            if (/*millis() - t0 > 20000 || */flag) {
+                t0 = millis();
+                CURRENT_STAGE = 12;
+                CURRENT_DIR = -1;
+                automobile.run(0, 0, 0);
+                sensors.reset_count();
+                break;
+            }
+            CURRENT_DIR = 3;
+            break;
+    }
 
-    t0 = millis();
-//    }
-//    automobile.run(300, 0, 150 );
-
-//    machine_arm.commit_mission(AS(INIT), 1000);
-//    open_and_close();
-    car_auto_control();
 
 }
+
 bool left_timer = millis();
+
 void car_auto_control() {
     if (CURRENT_DIR == 0) {
         switch (carState[0]) {
@@ -149,35 +314,27 @@ void car_auto_control() {
                 break;
         }
     } else if (CURRENT_DIR == 2) {
-        if (millis() - left_timer < 1000){
-            automobile.run(0, 0, 600);
+        switch (carState[1]) {
+            case CAR_STATE::LEFT:
+                automobile.run(1200, -0, 600);
+                break;
+            case CAR_STATE::RIGHT:
+                automobile.run(1200, 0, -600);
+                break;
+            case CAR_STATE::MIDDLE:
+                automobile.run(1200, 0, 0);
+                break;
+            case CAR_STATE::FULL:
+                automobile.run(1200, 0, 0);
+                break;
         }
-        if (carState[0] != CAR_STATE::LEFT ) {
-            automobile.run(0, 0, 600);
-        }
-        CURRENT_DIR = -1;
-
-//        switch (carState[1]) {
-//            case CAR_STATE::LEFT:
-//                automobile.run(800, -0, 100);
-//                break;
-//            case CAR_STATE::RIGHT:
-//                automobile.run(800, 0, -100);
-//                break;
-//            case CAR_STATE::MIDDLE:
-//                automobile.run(800, 0, 0);
-//                break;
-//            case CAR_STATE::FULL:
-//                automobile.run(800, 0, 0);
-//                break;
-//        }
     } else if (CURRENT_DIR == 3) {
         switch (carState[1]) {
             case CAR_STATE::LEFT:
-                automobile.run(-1200, -600, 0);
+                automobile.run(-1200, -300, 0);
                 break;
             case CAR_STATE::RIGHT:
-                automobile.run(-1200, 600, -0);
+                automobile.run(-1200, 300, -0);
                 break;
             case CAR_STATE::MIDDLE:
                 automobile.run(-1200, 0, 0);
@@ -208,10 +365,13 @@ void Automobile_Init() {
 }
 
 void MachineArm_Init() {
-    for (int port : ARM_SERVO_PORT) {
-        machine_arm.add(port);
+//    for (int port : ARM_SERVO_PORT) {
+//        machine_arm.add(port);
+//    }
+//    machine_arm.begin(AS(ARM_STATUS::INIT));
+    for (int i = 0; i < 1; ++i) {
+//        servos[i].attach(ARM_SERVO_PORT[i]);
     }
-    machine_arm.begin(AS(ARM_STATUS::INIT));
 }
 
 void refresh_car_state() {
@@ -252,6 +412,11 @@ void get_qrcode() {
     while (Serial1.available()) {
         auto str = Serial1.readStringUntil('\n');
         str = str.substring(0, str.length() - 1);
+
+        sscanf(str.c_str(), "%1d%1d%1d+%1d%1d%1d",
+               &CODE_SERIES[0], &CODE_SERIES[1], &CODE_SERIES[2],
+               &CODE_SERIES[3], &CODE_SERIES[4], &CODE_SERIES[5]);
+
         display.println(str);
         display.display();
     }

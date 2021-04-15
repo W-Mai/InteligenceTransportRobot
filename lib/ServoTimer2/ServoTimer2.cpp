@@ -10,7 +10,7 @@ static void initISR();
 static void writeChan(uint8_t chan, int pulsewidth);
 
 #define FRAME_SYNC_INDEX   0		 // frame sync delay is the first entry in the channel array
-#define FRAME_SYNC_PERIOD  20000	   // total frame duration in microseconds 
+#define FRAME_SYNC_PERIOD  10000	   // total frame duration in microseconds
 #define FRAME_SYNC_DELAY   ((FRAME_SYNC_PERIOD - ( NBR_CHANNELS * DEFAULT_PULSE_WIDTH))/ 128) // number of iterations of the ISR to get the desired frame rate
 #define DELAY_ADJUST	 8		 // number of microseconds of calculation overhead to be subtracted from pulse timings   
 
