@@ -21,6 +21,7 @@
 #include "Sensors.h"
 #include "Automobile.h"
 #include "MachineArmDefines.h"
+//#include "XServoList.h"
 //#include "ServoTimer2.h"
 
 #define MFL 13, 12
@@ -30,8 +31,10 @@
 
 Sensors sensors;
 Automobile automobile(4, 8);
-//MachineArm machine_arm(5);
+MachineArm machine_arm(5);
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+XServoList xServoList(5);
 
 int CODE_SERIES[6] = {0, 0, 0, 0, 0, 0};
 
@@ -83,11 +86,11 @@ void setup() {
     MachineArm_Init();
 
     automobile.disable();
-//    machine_arm.commit_mission(AS(ARM_STATUS::INIT), 50);
+
 
 //    delay(1000);
-    MsTimer2::set(2, mypwm);
-    MsTimer2::start();
+//    MsTimer2::set(2, mypwm);
+//    MsTimer2::start();
 
 //    Timer3.initialize(1000);
 //    Timer3.attachInterrupt(refresh_sensors);
@@ -103,16 +106,24 @@ void setup() {
     CURRENT_DIR = -1;
     t0 = millis();
 
-    softPwm.set_micros(micros);
-    softPwm.add(44, 50, 76);
+//    softPwm.set_micros(micros);
+//    softPwm.add(44, 50, 76);
+//
+//    Serial.println("START");
 
+//    xServoList.add(44);
+//    xServoList.write(0, 165);
+//    Serial.println("ADD NEW CONFIG");
     Timer3.initialize(16);
 
     Timer3.attachInterrupt(mypwm);
+//    Serial.println("INTERRUPT");
+
+    machine_arm.commit_mission(AS(ARM_STATUS::INIT), 50);
 }
 
 void mypwm() {
-    softPwm.commit();
+    machine_arm.commit();
 }
 
 void gogogo() {
@@ -133,27 +144,21 @@ void open_and_close() {
 
 bool flag = false;
 
-void loop() {
+void loop2() {
 #define SERVO_MIN() (25)  // minimum value in uS for this servo
 #define SERVO_MAX() (130)  // maximum value in uS for this servo
-//    for (int i = 0; i < 270; ++i) {
-//        softPwm.set_duty(0,map(i, 0, 270, SERVO_MIN(), SERVO_MAX()));
-//        delay(10);
-//    }
-//    for (int i = 270; i > 0; i--) {
-//        softPwm.set_duty(0,map(i, 0, 270, SERVO_MIN(), SERVO_MAX()));
-//        delay(10);
-//    }
     if (millis() - t0 < 2000) {
-        softPwm.set_duty(0, map(145, 0, 270, SERVO_MIN(), SERVO_MAX()));
+//        softPwm.set_duty(0, map(145, 0, 270, SERVO_MIN(), SERVO_MAX()));
+        xServoList.write(0, 145);
     } else if (millis() - t0 < 4000) {
-        softPwm.set_duty(0, map(165, 0, 270, SERVO_MIN(), SERVO_MAX()));
+//        softPwm.set_duty(0, map(165, 0, 270, SERVO_MIN(), SERVO_MAX()));
+        xServoList.write(0, 165);
 
     } else t0 = millis();
 
 }
 
-void loop2() {
+void loop() {
 
 //    if (millis() - t0 > 50) {
 //        if (k == -1 || k == 1) f = -f;
@@ -365,13 +370,14 @@ void Automobile_Init() {
 }
 
 void MachineArm_Init() {
-//    for (int port : ARM_SERVO_PORT) {
-//        machine_arm.add(port);
-//    }
-//    machine_arm.begin(AS(ARM_STATUS::INIT));
-    for (int i = 0; i < 1; ++i) {
-//        servos[i].attach(ARM_SERVO_PORT[i]);
+    machine_arm.set_micros(micros);
+    for (int port : ARM_SERVO_PORT) {
+        machine_arm.add(port);
     }
+    machine_arm.begin(AS(ARM_STATUS::INIT));
+//    for (int i = 0; i < 1; ++i) {
+////        servos[i].attach(ARM_SERVO_PORT[i]);
+//    }
 }
 
 void refresh_car_state() {

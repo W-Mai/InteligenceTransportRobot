@@ -5,7 +5,7 @@
 #ifndef INTELIGENCETRANSPORTROBOT_MACHINEARMDEFINES_H
 #define INTELIGENCETRANSPORTROBOT_MACHINEARMDEFINES_H
 
-//#include "MachineArm.h"
+#include "MachineArm.h"
 #define NM (-3)
 #define AS(X) ARM_STATUS_ARRAY[(X)]
 
@@ -51,7 +51,7 @@ enum ARM_STATUS {
 };
 
 int16_t ARM_STATUS_ARRAY[][5] = {
-        {145,  30,  0,  35,  145}, // INIT
+        {145,  30,  0,  50,  145}, // INIT
         {NM, 100, 5,  70,  45}, // SCAN  识别二维码
 
         {145, 110, 60, 90,  80},//DRAWLup抓取上边的状态
