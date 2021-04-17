@@ -2,7 +2,7 @@
 // Created by W-Mai on 2021/4/10.
 //
 
-#define XDEBUG
+//#define XDEBUG
 
 #define SCREEN_WIDTH 128 // OLED display width, in pixels
 #define SCREEN_HEIGHT 64 // OLED display height, in pixels
@@ -21,8 +21,6 @@
 #include "Sensors.h"
 #include "Automobile.h"
 #include "MachineArmDefines.h"
-//#include "XServoList.h"
-//#include "ServoTimer2.h"
 
 #define MFL 13, 12
 #define MFR 7, 4
@@ -45,8 +43,8 @@ enum CAR_STATE {
 CAR_STATE carState[2] = {CAR_STATE::MIDDLE, CAR_STATE::MIDDLE};
 int CURRENT_DIR = -1; // 0 F, 1 B, 2 L, 3 R
 int CURRENT_STAGE = 0;
-
-//ServoTimer2 servos[5] = {ServoTimer2(), ServoTimer2(), ServoTimer2(), ServoTimer2(), ServoTimer2()};
+bool ARM_FLAG = false;
+bool IS_Got_CODE = false;
 
 void Automobile_Init();
 
@@ -64,17 +62,16 @@ void refresh_car_state();
 
 int timer1_counter;
 
-void gogogo();
+void StepperTickHandler();
 
 uint32_t t0 = millis();
+uint32_t t1 = millis();
 
-SoftPWM softPwm(2);
-
-void mypwm();
+void ServoTickHandler();
 
 void setup() {
     Serial.begin(115200);
-    Serial1.begin(19200);
+    Serial1.begin(9600);
     if (!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
         Serial.println(F("SSD1306 allocation failed"));
         for (;;); // Don't proceed, loop forever
@@ -85,50 +82,42 @@ void setup() {
     Automobile_Init();
     MachineArm_Init();
 
-    automobile.disable();
+//    automobile.disable();
+
+    Timer1.initialize(300);
+    Timer1.attachInterrupt(StepperTickHandler);
 
 
-//    delay(1000);
-//    MsTimer2::set(2, mypwm);
-//    MsTimer2::start();
-
-//    Timer3.initialize(1000);
-//    Timer3.attachInterrupt(refresh_sensors);
-
-    Timer1.initialize(100);
-    Timer1.attachInterrupt(gogogo);
-
-
-    Timer5.initialize(3000);
-    Timer5.attachInterrupt(refresh_sensors);
+    Timer3.initialize(3000);
+    Timer3.attachInterrupt(refresh_sensors);
 
 
     CURRENT_DIR = -1;
     t0 = millis();
 
-//    softPwm.set_micros(micros);
-//    softPwm.add(44, 50, 76);
-//
-//    Serial.println("START");
-
-//    xServoList.add(44);
-//    xServoList.write(0, 165);
-//    Serial.println("ADD NEW CONFIG");
-    Timer3.initialize(16);
-
-    Timer3.attachInterrupt(mypwm);
-//    Serial.println("INTERRUPT");
+    Timer5.initialize(16);
+    Timer5.attachInterrupt(ServoTickHandler);
 
     machine_arm.commit_mission(AS(ARM_STATUS::INIT), 50);
+    ARM_FLAG = true;
+
+    CURRENT_STAGE = -1;
 }
 
-void mypwm() {
-    machine_arm.commit();
+
+void ServoTickHandler() {
+//    if (millis() - t1 > 2000) {
+//        arm_flag = !arm_flag;
+//        t1 = millis();
+//    }
+    if (ARM_FLAG) {
+        machine_arm.commit();
+    }
 }
 
-void gogogo() {
-//    automobile.commit();
-
+void StepperTickHandler() {
+    if (!ARM_FLAG)
+        automobile.commit();
 }
 
 int k = 1;
@@ -158,35 +147,48 @@ void loop2() {
 
 }
 
+uint32_t t_display = millis();
+
 void loop() {
 
-//    if (millis() - t0 > 50) {
-//        if (k == -1 || k == 1) f = -f;
-//        k += f;
-
+    if (millis() - t_display > 100) {
 #if defined(XDEBUG)
-    testdrawstyles();      // Draw characters of the default font
+        testdrawstyles();      // Draw characters of the default font
 #else
-    get_qrcode();
+        get_qrcode();
 #endif
+    }
+
     if (0 <= CURRENT_DIR && CURRENT_DIR <= 3) {
         car_auto_control();
     }
     switch (CURRENT_STAGE) {
+        case -1:
+            if (millis() - t0 > 1000) {
+                t0 = millis();
+                CURRENT_STAGE = 0;
+                ARM_FLAG = false;
+                break;
+            }
+            ARM_FLAG = true;
+//            machine_arm.commit_mission(AS(ARM_STATUS::INIT), 100);
+            break;
         case 0:
-            if (millis() - t0 > 7000) {
+            if (millis() - t0 > 5000) {
                 t0 = millis();
                 CURRENT_STAGE = 1;
+                sensors.reset_count();
             }
-            automobile.run(0, 1200, 0);
+            automobile.run(0, 1600, 0);
+            //automobile.run(1600, 1600, 0);
             break;
         case 1:
-            if (millis() - t0 > 2500) {
+            if (sensors.C[0] == 1 || sensors.C[1] == 1 || sensors.C[2] == 1) {
                 t0 = millis();
                 CURRENT_STAGE = 2;
                 break;
             }
-            automobile.run(1200, 0, 0);
+            automobile.run(1500, 0, 0);
             break;
         case 2:
             if (millis() - t0 > 2000) {
@@ -198,7 +200,7 @@ void loop() {
             break;
         case 3:
             flag = sensors.C[3] == 5 || sensors.C[4] == 5 || sensors.C[5] == 5;
-            if (millis() - t0 > 23000 || flag) {
+            if (/*millis() - t0 > 23000 ||*/ flag) {
                 t0 = millis();
                 CURRENT_STAGE = 4;
                 CURRENT_DIR = -1;
@@ -214,14 +216,24 @@ void loop() {
                 sensors.reset_count();
             }
             automobile.run(0, 0, 0);
+//            ARM_FLAG = true;
+//            machine_arm.commit_mission(AS(ARM_STATUS::DRAWMUP), 50);
+//            delay(3000);
+//            machine_arm.commit_mission(AS(ARM_STATUS::DRAWM), 50);
+//            delay(3000);
+//            machine_arm.commit_mission(AS(ARM_STATUS::CLAW_CLOSE), 50);
+//            delay(500);
+//            machine_arm.commit_mission(AS(ARM_STATUS::MOVEING), 50);
+//            delay(3000);
+//            ARM_FLAG = false;
             break;
         case 5:
-            if (millis() - t0 > 1000) {
+            if (millis() - t0 > 3000) {
                 t0 = millis();
                 CURRENT_STAGE = 6;
                 sensors.reset_count();
             }
-            automobile.run(1200, 0, 0);
+            automobile.run(1500, 0, 0);
             break;
         case 6:
             flag = sensors.C[0] == 3 || sensors.C[1] == 3 || sensors.C[2] == 3;
@@ -241,7 +253,7 @@ void loop() {
                 CURRENT_STAGE = 8;
                 automobile.run(0, 0, 0);
             }
-            automobile.run(0, 1200, 0);
+            automobile.run(0, 1500, 0);
             break;
         case 8:
             if (millis() - t0 > 3000) {
@@ -258,7 +270,7 @@ void loop() {
                 automobile.run(0, 0, 0);
                 sensors.reset_count();
             }
-            automobile.run(0, -1200, 0);
+            automobile.run(0, -1500, 0);
             break;
         case 10:
             if (millis() - t0 > 1000) {
@@ -266,13 +278,13 @@ void loop() {
                 CURRENT_STAGE = 11;
                 sensors.reset_count();
             }
-            automobile.run(1200, 0, 0);
+            automobile.run(-1500, 0, 0);
             break;
         case 11:
             flag = sensors.C[0] == 3 || sensors.C[1] == 3 || sensors.C[2] == 3;
             if (/*millis() - t0 > 20000 || */flag) {
                 t0 = millis();
-                CURRENT_STAGE = 12;
+                CURRENT_STAGE = 5;
                 CURRENT_DIR = -1;
                 automobile.run(0, 0, 0);
                 sensors.reset_count();
@@ -291,61 +303,61 @@ void car_auto_control() {
     if (CURRENT_DIR == 0) {
         switch (carState[0]) {
             case CAR_STATE::LEFT:
-                automobile.run(0, 1200, 600);
+                automobile.run(750, 1500, 100);
                 break;
             case CAR_STATE::RIGHT:
-                automobile.run(0, 1200, -600);
+                automobile.run(-750, 1500, -100);
                 break;
             case CAR_STATE::MIDDLE:
-                automobile.run(0, 1200, 0);
+                automobile.run(0, 1500, 0);
                 break;
             case CAR_STATE::FULL:
-                automobile.run(0, 1200, 0);
+                automobile.run(0, 1500, 0);
                 break;
         }
     } else if (CURRENT_DIR == 1) {
         switch (carState[0]) {
             case CAR_STATE::LEFT:
-                automobile.run(600, -1200, 0);
+                automobile.run(750, -1500, 0);
                 break;
             case CAR_STATE::RIGHT:
-                automobile.run(-600, -1200, -0);
+                automobile.run(-750, -1500, -0);
                 break;
             case CAR_STATE::MIDDLE:
-                automobile.run(0, -1200, 0);
+                automobile.run(0, -1500, 0);
                 break;
             case CAR_STATE::FULL:
-                automobile.run(0, -1200, 0);
+                automobile.run(0, -1500, 0);
                 break;
         }
     } else if (CURRENT_DIR == 2) {
         switch (carState[1]) {
             case CAR_STATE::LEFT:
-                automobile.run(1200, -0, 600);
+                automobile.run(1500, -0, 750);
                 break;
             case CAR_STATE::RIGHT:
-                automobile.run(1200, 0, -600);
+                automobile.run(1500, 0, -750);
                 break;
             case CAR_STATE::MIDDLE:
-                automobile.run(1200, 0, 0);
+                automobile.run(1500, 0, 0);
                 break;
             case CAR_STATE::FULL:
-                automobile.run(1200, 0, 0);
+                automobile.run(1500, 0, 0);
                 break;
         }
     } else if (CURRENT_DIR == 3) {
         switch (carState[1]) {
             case CAR_STATE::LEFT:
-                automobile.run(-1200, -300, 0);
+                automobile.run(-1500, -300, 0);
                 break;
             case CAR_STATE::RIGHT:
-                automobile.run(-1200, 300, -0);
+                automobile.run(-1500, 300, -0);
                 break;
             case CAR_STATE::MIDDLE:
-                automobile.run(-1200, 0, 0);
+                automobile.run(-1500, 0, 0);
                 break;
             case CAR_STATE::FULL:
-                automobile.run(-1200, 0, 0);
+                automobile.run(-1500, 0, 0);
                 break;
         }
     }
@@ -414,20 +426,32 @@ void get_qrcode() {
     display.setTextSize(3, 8);             // Draw 2X-scale text
     display.setTextColor(SSD1306_WHITE);
 
-    Serial1.println("qrcode");
-    while (Serial1.available()) {
-        auto str = Serial1.readStringUntil('\n');
-        str = str.substring(0, str.length() - 1);
+//    Serial1.println("qrcode");
+    if (!IS_Got_CODE) {
+        while (Serial1.available()) {
+            auto str = Serial1.readStringUntil('\n');
+            if (str.length() < 3) continue;
+            str = str.substring(0, str.length() - 1);
 
-        sscanf(str.c_str(), "%1d%1d%1d+%1d%1d%1d",
-               &CODE_SERIES[0], &CODE_SERIES[1], &CODE_SERIES[2],
-               &CODE_SERIES[3], &CODE_SERIES[4], &CODE_SERIES[5]);
+            sscanf(str.c_str(), "%1d%1d%1d+%1d%1d%1d",
+                   &CODE_SERIES[0], &CODE_SERIES[1], &CODE_SERIES[2],
+                   &CODE_SERIES[3], &CODE_SERIES[4], &CODE_SERIES[5]);
 
-        display.println(str);
+            IS_Got_CODE = true;
+        }
+        Serial1.flush();
+    }
+    if (IS_Got_CODE) {
+        display.print(CODE_SERIES[0]);
+        display.print(CODE_SERIES[1]);
+        display.print(CODE_SERIES[2]);
+        display.print("+");
+        display.print(CODE_SERIES[3]);
+        display.print(CODE_SERIES[4]);
+        display.print(CODE_SERIES[5]);
         display.display();
     }
-    Serial1.flush();
-    delay(20);
+//    delay(20);
 }
 
 void testdrawstyles() {
