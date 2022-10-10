@@ -148,10 +148,12 @@ void loop2() {
 }
 
 uint32_t t_display = millis();
+int local_arm_status = -1;
+uint32_t local_t = millis();
 
 void loop() {
 
-    if (millis() - t_display > 100) {
+    if (millis() - t_display > 100 && !ARM_FLAG) {
 #if defined(XDEBUG)
         testdrawstyles();      // Draw characters of the default font
 #else
@@ -210,22 +212,49 @@ void loop() {
             CURRENT_DIR = 0;
             break;
         case 4:
-            if (millis() - t0 > 10000) {
-                t0 = millis();
-                CURRENT_STAGE = 5;
-                sensors.reset_count();
+            switch (local_arm_status) {
+                case -1:
+                    automobile.run(0, 0, 0);
+                    automobile.disable();
+                    ARM_FLAG = true;
+                    local_t = millis();
+                    local_arm_status++;
+                    break;
+                case 0:
+                    if (millis() - local_t > 3000) {
+                        local_t = millis();
+                        local_arm_status++;
+                    }
+                    machine_arm.commit_mission(AS(ARM_STATUS::DRAWMUP), 50);
+                    break;
+                case 1:
+                    if (millis() - local_t > 3000) {
+                        local_t = millis();
+                        local_arm_status++;
+                    }
+                    machine_arm.commit_mission(AS(ARM_STATUS::DRAWM), 50);
+                    break;
+                case 2:
+                    if (millis() - local_t > 3000) {
+                        local_t = millis();
+                        local_arm_status++;
+                    }
+                    machine_arm.commit_mission(AS(ARM_STATUS::CLAW_CLOSE), 50);
+                case 3:
+                    if (millis() - local_t > 3000) {
+                        local_t = millis();
+                        local_arm_status++;
+                    }
+                    machine_arm.commit_mission(AS(ARM_STATUS::MOVEING), 50);
+                    break;
+                default:
+                    t0 = millis();
+                    CURRENT_STAGE = 5;
+                    local_arm_status = -1;
+                    sensors.reset_count();
+                    ARM_FLAG = false;
+                    automobile.enable();
             }
-            automobile.run(0, 0, 0);
-//            ARM_FLAG = true;
-//            machine_arm.commit_mission(AS(ARM_STATUS::DRAWMUP), 50);
-//            delay(3000);
-//            machine_arm.commit_mission(AS(ARM_STATUS::DRAWM), 50);
-//            delay(3000);
-//            machine_arm.commit_mission(AS(ARM_STATUS::CLAW_CLOSE), 50);
-//            delay(500);
-//            machine_arm.commit_mission(AS(ARM_STATUS::MOVEING), 50);
-//            delay(3000);
-//            ARM_FLAG = false;
             break;
         case 5:
             if (millis() - t0 > 3000) {
@@ -364,6 +393,7 @@ void car_auto_control() {
 }
 
 void refresh_sensors() {
+    if (ARM_FLAG)return;
     //更新传感器数据
     sensors.update_sensor();
     refresh_car_state();
